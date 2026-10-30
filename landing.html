@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DriveRight — Learn to drive, the right way</title>
+<meta name="description" content="Book driving lessons with certified instructors, track every skill from parking to test-ready, and see your progress after every lesson." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#FAF7F2;            /* warm off-white */
+    --ink:#2B2F33;           /* deep road-grey */
+    --ink-soft:#5A5F66;
+    --line:#E5E0D6;
+    --green:#2F7D4F;         /* calm green — actions only */
+    --green-dark:#256A41;
+    --green-tint:#EFF5F1;
+    --orange:#E8842C;        /* signal orange — attention only */
+    --orange-tint:#FDF3E7;
+    --white:#FFFFFF;
+    --shadow-soft:0 2px 10px rgba(43,47,51,.07);
+    --shadow-lift:0 6px 20px rgba(43,47,51,.10);
+    --shadow-deep:0 24px 50px rgba(43,47,51,.16);
+    --radius:16px;
+    --font-head:"Bricolage Grotesque", Georgia, serif;
+    --font-body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3,h4{font-family:var(--font-head);line-height:1.15;letter-spacing:-.01em}
+  .container{width:min(1120px,100% - 40px);margin-inline:auto}
+  section{padding:64px 0}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--green);margin-bottom:14px;
+  }
+  .eyebrow::before{content:"";width:22px;height:2px;background:var(--green);border-radius:2px}
+  h2.section-title{font-size:clamp(28px,5vw,38px);font-weight:700;margin-bottom:12px}
+  .section-sub{color:var(--ink-soft);max-width:560px;margin-bottom:40px}
+
+  /* ---------- Buttons (flat, ≥44px tap target) ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    min-height:48px;padding:12px 26px;border-radius:999px;
+    font-weight:600;font-size:16px;border:0;cursor:pointer;
+    transition:background .25s ease, transform .25s ease, box-shadow .25s ease;
+  }
+  .btn-primary{background:var(--green);color:#fff}
+  .btn-primary:hover{background:var(--green-dark);transform:translateY(-1px);box-shadow:var(--shadow-lift)}
+  .btn-ghost{background:transparent;color:var(--ink);padding-inline:18px}
+  .btn-ghost:hover{background:var(--green-tint)}
+  :focus-visible{outline:3px solid var(--green);outline-offset:2px}
+
+  /* ---------- Header ---------- */
+  .site-header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(250,247,242,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-weight:700;font-size:20px}
+  .brand-mark{
+    width:38px;height:38px;border-radius:50%;background:var(--green);
+    display:grid;place-items:center;flex-shrink:0;
+  }
+  .nav-desktop{display:none;gap:28px;font-weight:500}
+  .nav-desktop a:hover{color:var(--green)}
+  .header-cta{display:flex;align-items:center;gap:8px}
+  .header-cta .btn-primary{min-height:44px;padding:10px 20px;font-size:15px}
+  @media(min-width:900px){ .nav-desktop{display:flex} }
+
+  /* ---------- Hero ---------- */
+  .hero{padding:56px 0 40px}
+  .hero-grid{display:grid;gap:36px;align-items:center}
+  @media(min-width:900px){
+    .hero{padding:80px 0 64px}
+    .hero-grid{grid-template-columns:1.05fr .95fr;gap:56px}
+  }
+  .hero h1{font-size:clamp(34px,7vw,54px);font-weight:700;margin-bottom:18px}
+  .hero h1 em{font-style:normal;color:var(--green)}
+  .hero p.lede{font-size:18px;color:var(--ink-soft);margin-bottom:26px;max-width:520px}
+  .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:26px}
+  .trust{display:flex;align-items:center;gap:12px;color:var(--ink-soft);font-size:14.5px}
+  .stars{color:var(--orange);letter-spacing:2px;font-size:15px}
+  .trust strong{color:var(--ink)}
+
+  .hero-photo{
+    position:relative;border-radius:24px;overflow:hidden;
+    box-shadow:var(--shadow-lift);
+  }
+  .hero-photo img{width:100%;height:100%;object-fit:cover;aspect-ratio:4/3}
+  @media(min-width:900px){ .hero-photo img{aspect-ratio:5/6} }
+  .hero-badge{
+    position:absolute;left:16px;bottom:16px;
+    background:rgba(255,255,255,.95);border-radius:12px;
+    padding:10px 14px;display:flex;align-items:center;gap:10px;
+    box-shadow:var(--shadow-soft);font-size:13.5px;font-weight:600;
+  }
+  .hero-badge svg{flex-shrink:0}
+
+  /* ---------- Dashed lane divider ---------- */
+  .lane{border:0;border-top:3px dashed var(--line);margin:0}
+
+  /* =========================================================
+     3D STORY — "How DriveRight solves it"
+     Scroll-linked CSS 3D. Calm, daylight, soft shadows.
+     Static (reduced-motion / no-JS) shows all three acts stacked.
+     ========================================================= */
+  .story-head{margin-bottom:8px}
+  .story-scroll{position:relative}
+  .story-stage{
+    perspective:1100px;perspective-origin:50% 38%;
+    display:flex;align-items:flex-start;justify-content:center;
+    padding-top:24px;
+  }
+  .act{position:relative;opacity:1;margin:0 auto 48px;width:100%}
+  .act-inner{display:flex;flex-direction:column;align-items:center;pointer-events:none}
+  .cap{
+    margin-top:20px;text-align:center;max-width:420px;
+    font-size:15.5px;color:var(--ink-soft);
+  }
+  .cap b{color:var(--ink);display:block;font-size:17px;margin-bottom:4px}
+  @media (prefers-reduced-motion: no-preference){
+    .story-scroll{
+      height:340vh;                 /* the 3 acts live inside this scroll */
+    }
+    .story-stage{
+      position:sticky;top:64px;height:calc(100vh - 64px);
+      align-items:center;padding-top:0;
+    }
+    .act{position:absolute;inset:0;margin:0;display:flex;align-items:center;justify-content:center}
+  }
+
+  .scene{transform-style:preserve-3d;position:relative;pointer-events:none}
+  .ground{
+    position:absolute;left:50%;bottom:-36px;width:540px;max-width:88vw;height:120px;
+    transform:translateX(-50%);
+    background:rgba(47,125,79,.14);border-radius:50%;
+    filter:blur(26px);
+  }
+
+  /* ACT 1 — booking clash */
+  .scene1{width:460px;max-width:100%;height:340px;--s:1}
+  .bcard{
+    position:absolute;top:70px;width:216px;min-height:150px;
+    background:var(--white);border-radius:14px;padding:14px 16px;
+    box-shadow:0 18px 36px rgba(43,47,51,.16);
+    border:2px solid var(--line);
+  }
+  .bcard h5{font-family:var(--font-body);font-size:14px;font-weight:700;margin-bottom:2px}
+  .bcard .bline{font-size:12.5px;color:var(--ink-soft)}
+  .bcard .slot{margin-top:8px;font-weight:700;font-size:15px}
+  .bcard .conf{display:inline-block;margin-top:10px;font-size:11.5px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;border-radius:999px;padding:4px 10px}
+  .conf.clash{background:var(--orange-tint);color:#B4560F}
+  .conf.ok{background:var(--green-tint);color:var(--green-dark)}
+  .bcardA{left:0}
+  .bcardB{right:0}
+  .chip{
+    position:absolute;top:-16px;left:50%;
+    transform:translateX(-50%);
+    border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;
+    box-shadow:var(--shadow-soft);white-space:nowrap;
+  }
+  .chip.clash{background:var(--orange);color:#fff}
+  .chip.ok{background:var(--green);color:#fff}
+  .cartogether{
+    position:absolute;left:50%;top:96px;transform:translateX(-50%);
+    font-family:var(--font-head);font-weight:700;font-size:15px;color:var(--ink-soft);
+  }
+  .cartogether.changed{color:var(--green)}
+
+  /* ACT 2 — balance phone */
+  .scene2{width:300px;height:430px;--s:1}
+  .slip{
+    position:absolute;left:36px;top:150px;width:180px;min-height:110px;
+    background:var(--white);border-radius:10px;padding:14px;
+    box-shadow:0 16px 34px rgba(43,47,51,.14);
+    border:1px dashed var(--line);
+    font-size:12px;color:var(--ink-soft);
+  }
+  .slip b{color:var(--ink);font-size:13px}
+  .slip .q{margin-top:8px;font-style:italic;color:var(--orange)}
+  .phone{
+    position:relative;width:212px;height:412px;margin:0 auto;
+    background:var(--white);border-radius:30px;
+    box-shadow:var(--shadow-deep);
+    padding:14px 12px;
+  }
+  .notch{width:74px;height:8px;border-radius:999px;background:var(--line);margin:2px auto 12px}
+  .phead{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
+  .prow{background:var(--green-tint);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  .prow.warn{background:var(--orange-tint)}
+  .prow .pl{font-size:11.5px;color:var(--ink-soft);font-weight:600}
+  .prow .pv{font-family:var(--font-head);font-weight:700;font-size:20px}
+  .prow .pv.due{color:#B4560F}
+  .pbtn{
+    display:grid;place-items:center;height:44px;border-radius:12px;
+    background:var(--green);color:#fff;font-weight:700;font-size:14.5px;margin-top:10px;
+  }
+  .pnext{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--ink-soft);margin-top:10px}
+  .pnext svg{flex-shrink:0}
+
+  /* ACT 3 — progress cards + badge */
+  .scene3{width:560px;max-width:100%;height:380px;--s:1}
+  .rrow{position:absolute;left:50%;top:50%;width:100%;
+    display:flex;justify-content:center;gap:14px}
+  .rcard{
+    width:160px;background:var(--white);border-radius:14px;padding:14px;
+    box-shadow:0 18px 36px rgba(43,47,51,.15);
+  }
+  .rcard h6{font-family:var(--font-head);font-size:15px;margin-bottom:2px}
+  .rcard .rs{font-size:11.5px;color:var(--ink-soft);margin-bottom:10px}
+  .rcard .bar{height:9px;border-radius:999px;background:var(--green-tint);overflow:hidden}
+  .rcard .bar i{display:block;height:100%;border-radius:999px;background:var(--green)}
+  .rcard .rv{margin-top:8px;font-size:11.5px;font-weight:700;color:var(--green-dark)}
+  .badge3{
+    position:absolute;left:50%;top:26px;transform:translateX(-50%);
+    display:flex;align-items:center;gap:10px;
+    background:var(--white);border-radius:999px;padding:8px 16px 8px 8px;
+    box-shadow:var(--shadow-lift);
+    font-weight:700;font-family:var(--font-head);font-size:16px;
+    animation:floatBadge 6s ease-in-out infinite alternate;
+  }
+  @keyframes floatBadge{from{margin-top:0}to{margin-top:-6px}}
+  .badge3 .bmark{
+    width:40px;height:40px;border-radius:50%;background:var(--green);
+    display:grid;place-items:center;
+  }
+  @media(prefers-reduced-motion:reduce){.badge3{animation:none}}
+
+  /* scene scale on small screens (wrapper-level, JS untouched) */
+  @media(max-width:560px){
+    .scene1{--s:.78;height:270px}
+    .scene2{--s:.8;height:350px}
+    .scene3{--s:.62;height:300px}
+  }
+  .scaler{transform:scale(var(--s,1));transform-origin:50% 40%}
+
+  /* ---------- Stages ---------- */
+  .stages-head{margin-bottom:36px}
+  .stage-grid{display:grid;gap:20px}
+  @media(min-width:860px){ .stage-grid{grid-template-columns:1fr 1fr 1fr;gap:24px} }
+  .stage-card{
+    background:var(--white);border-radius:var(--radius);
+    padding:26px 24px;box-shadow:var(--shadow-soft);
+    border-top:4px solid transparent;
+    transition:box-shadow .35s ease;
+  }
+  .stage-card:hover{box-shadow:var(--shadow-lift)}
+  .stage-card:nth-child(1){border-top-color:var(--orange)}
+  .stage-card:nth-child(2){border-top-color:var(--orange)}
+  .stage-card:nth-child(3){border-top-color:var(--green)}
+  .stage-icon{
+    width:52px;height:52px;border-radius:14px;background:var(--green-tint);
+    display:grid;place-items:center;margin-bottom:16px;
+  }
+  .stage-card h3{font-size:21px;margin-bottom:8px}
+  .stage-card p{color:var(--ink-soft);font-size:15px;margin-bottom:16px}
+  .meter{margin-bottom:8px}
+  .meter-top{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}
+  .meter-top span:last-child{color:var(--ink-soft)}
+  .bar{height:10px;border-radius:999px;background:var(--green-tint);overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:999px;background:var(--green)}
+  .bar.amber{background:var(--orange-tint)}
+  .bar.amber > i{background:var(--orange)}
+  .meter-note{font-size:12.5px;color:var(--ink-soft)}
+  .stage-flag{width:100%;margin-top:6px}
+
+  /* ---------- How it works ---------- */
+  .how{background:var(--green-tint)}
+  .steps{display:grid;gap:24px}
+  @media(min-width:720px){ .steps{grid-template-columns:repeat(4,1fr);gap:20px} }
+  .step{background:#fff;border-radius:var(--radius);padding:22px 20px;box-shadow:var(--shadow-soft);position:relative}
+  .step-num{
+    width:40px;height:40px;border-radius:50%;
+    display:grid;place-items:center;
+    background:var(--green);color:#fff;font-weight:700;font-family:var(--font-head);
+    margin-bottom:14px;
+  }
+  .step h4{font-size:17px;margin-bottom:6px}
+  .step p{font-size:14.5px;color:var(--ink-soft)}
+  @media(min-width:720px){
+    .steps-road{position:relative}
+    .steps-road::before{
+      content:"";position:absolute;top:20px;left:0;right:0;
+      border-top:3px dashed rgba(47,125,79,.35);z-index:0;
+    }
+    .step{z-index:1}
+  }
+
+  /* ---------- Packages ---------- */
+  .pkg-grid{display:grid;gap:20px;align-items:stretch}
+  @media(min-width:860px){ .pkg-grid{grid-template-columns:1fr 1fr 1fr;gap:24px} }
+  .pkg{
+    background:#fff;border-radius:20px;padding:28px 24px;
+    box-shadow:var(--shadow-soft);display:flex;flex-direction:column;
+    border:2px solid transparent;
+    transition:box-shadow .35s ease;
+  }
+  .pkg:hover{box-shadow:var(--shadow-lift)}
+  .pkg.popular{border-color:var(--green);position:relative}
+  .pkg-partner{
+    text-transform:uppercase;letter-spacing:.1em;font-size:11.5px;font-weight:700;
+    color:var(--ink-soft);margin-bottom:6px;
+  }
+  .pkg h3{font-size:24px;margin-bottom:4px}
+  .pkg .price{font-family:var(--font-head);font-weight:700;font-size:32px;margin:10px 0 2px}
+  .pkg .price small{font-size:14px;font-weight:500;color:var(--ink-soft);font-family:var(--font-body)}
+  .pkg ul{list-style:none;margin:18px 0 26px;display:grid;gap:10px;flex:1}
+  .pkg li{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+  .pkg li svg{flex-shrink:0;margin-top:3px}
+  .pkg .btn{width:100%}
+  .ribbon{
+    position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+    background:var(--green);color:#fff;font-size:12px;font-weight:700;
+    padding:6px 14px;border-radius:999px;letter-spacing:.06em;text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .guarantees{display:grid;gap:12px;margin-top:36px}
+  @media(min-width:720px){ .guarantees{grid-template-columns:1fr 1fr} }
+  .guarantee{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--orange-tint);border-radius:12px;padding:14px 16px;font-size:14.5px;
+  }
+  .guarantee svg{flex-shrink:0;margin-top:2px}
+
+  /* ---------- Testimonials ---------- */
+  .quotes{display:grid;gap:20px}
+  @media(min-width:860px){ .quotes{grid-template-columns:repeat(3,1fr);gap:24px} }
+  .quote{background:#fff;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-soft)}
+  .quote .stars{margin-bottom:12px;display:block}
+  .quote p{font-size:15.5px;margin-bottom:18px}
+  .who{display:flex;align-items:center;gap:12px}
+  .avatar{
+    width:42px;height:42px;border-radius:50%;flex-shrink:0;
+    display:grid;place-items:center;font-weight:700;font-size:15px;
+    background:var(--green-tint);color:var(--green-dark);
+  }
+  .who b{display:block;font-size:14.5px}
+  .who span{font-size:13px;color:var(--ink-soft)}
+
+  /* ---------- Final CTA ---------- */
+  .final{background:var(--green);color:#fff;text-align:center;border-radius:28px;
+    margin:0 0 72px;padding:64px 24px}
+  .final h2{font-size:clamp(26px,5vw,40px);margin-bottom:12px}
+  .final p{opacity:.9;margin-bottom:28px;font-size:17px}
+
+  /* ---------- Footer ---------- */
+  .site-footer{border-top:1px solid var(--line);padding:36px 0;font-size:14px;color:var(--ink-soft)}
+  .footer-inner{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+  .footer-inner nav{display:flex;gap:20px}
+  .footer-inner nav a:hover{color:var(--green)}
+
+  /* ---------- Calm reveal ---------- */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){ .reveal{opacity:1;transform:none} }
+
+  @media(min-width:860px){ section{padding:88px 0} }
+</style>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="#" aria-label="DriveRight home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M9 3h2v4l3 0v2h-3v4h3v2h-3v2H9v-2H6v-2h3V9H6V7h3V3z" fill="#fff"/>
+        </svg>
+      </span>
+      DriveRight
+    </a>
+    <nav class="nav-desktop" aria-label="Main">
+      <a href="#story" style="color:var(--green)">See it in 3D</a>
+      <a href="#stages">The 3 stages</a>
+      <a href="#how">How it works</a>
+      <a href="#packages">Packages</a>
+      <a href="#stories">Stories</a>
+    </nav>
+    <div class="header-cta">
+      <a class="btn btn-ghost" href="#final">Log in</a>
+      <a class="btn btn-primary" href="#final">Sign up →</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">DriveRight Driving School</span>
+      <h1>Learn to drive — <em>the right way</em>.</h1>
+      <p class="lede">
+        Book lessons that never clash, pay for a package once online, and watch every skill
+        grow — from parallel parking to confident highway driving — with a certified instructor.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#packages">Book my first lesson →</a>
+        <a class="btn btn-ghost" href="#story">See how it solves the chaos ↓</a>
+      </div>
+      <div class="trust">
+        <span class="stars" aria-label="Rated 5 stars">★★★★★</span>
+        <span><strong>200+ learners</strong> passed their test with us</span>
+      </div>
+    </div>
+
+    <div class="hero-photo">
+      <img
+        src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=900&q=75"
+        alt="A learner driver's hands on the steering wheel during a daytime lesson"
+        fetchpriority="high"
+        onerror="this.remove()" />
+      <div class="hero-badge">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <circle cx="10" cy="10" r="9" fill="#2F7D4F"/>
+          <path d="M6 10.5l2.6 2.5L14 7.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Progress bar updated after today's lesson
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="lane" aria-hidden="true">
+
+<!-- ================= 3D STORY ================= -->
+<section id="story" style="padding-bottom:0">
+  <div class="container story-head reveal">
+    <span class="eyebrow">How DriveRight solves it</span>
+    <h2 class="section-title">The driving-school chaos, in 3D — and how we end it.</h2>
+    <p class="section-sub">Scroll slowly. Watch the problems you know — clashes, forgotten balances, “am I ready?” — leave the room.</p>
+  </div>
+
+  <div class="story-scroll" id="storywrap">
+    <div class="story-stage" id="stage">
+
+      <!-- ACT 1 · clash -->
+      <div class="act" id="act1">
+        <div class="act-inner">
+          <div class="scaler">
+            <div class="scene scene1">
+              <div class="ground"></div>
+              <div class="cartogether" id="overlabel">Same Tuesday, 4:00 PM</div>
+              <div class="bcard bcardA" id="cardA">
+                <h5>Booking · Emeka</h5>
+                <div class="bline">Instructor A · Learner Emeka O.</div>
+                <div class="slot">Tue 4:00 PM — 5:00 PM</div>
+                <span class="conf clash" id="oshA">Double-booked</span>
+              </div>
+              <div class="bcard bcardB" id="cardB">
+                <span class="chip clash" id="chipClash">⚠️ Clash!</span>
+                <h5>Booking · Adaeze</h5>
+                <div class="bline">Instructor A · Learner Adaeze N.</div>
+                <div class="slot">Tue 4:00 PM — 5:00 PM</div>
+                <span class="conf clash" id="oshB">Double-booked</span>
+                <span class="conf ok" id="oshOK" style="display:none">Reserved for you ✓</span>
+              </div>
+            </div>
+          </div>
+          <p class="cap"><b>Old way: two learners, one car, one argument.</b> DriveRight only shows slots that are actually free — a clash is impossible before it exists.</p>
+        </div>
+      </div>
+
+      <!-- ACT 2 · balance -->
+      <div class="act" id="act2">
+        <div class="act-inner">
+          <div class="scaler">
+            <div class="scene scene2">
+              <div class="ground"></div>
+              <div class="slip" id="slip">
+                <b>Lesson receipts…</b>
+                <div>3 lessons · cash · “later”</div>
+                <div class="q">“How much did I owe you again?”</div>
+              </div>
+              <div class="phone" id="phone">
+                <div class="notch"></div>
+                <div class="phead">DriveRight dashboard</div>
+                <div class="prow warn">
+                  <div class="pl">Balance owed</div>
+                  <div class="pv due">₦15,000</div>
+                </div>
+                <div class="prow">
+                  <div class="pl">Credits left</div>
+                  <div class="pv"><span id="creditpct">0</span>%</div>
+                </div>
+                <div class="pbtn">Pay balance now</div>
+                <div class="pnext">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#2F7D4F"/><path d="M4.5 7.4l1.7 1.6 3.3-3.6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Next lesson: Tue 4:00 PM · Instructor A
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="cap"><b>The slip gets lost. The app doesn’t.</b> Your balance and remaining credits sit at the top of your dashboard — pay online, clear it, move on.</p>
+        </div>
+      </div>
+
+      <!-- ACT 3 · progress -->
+      <div class="act" id="act3">
+        <div class="act-inner">
+          <div class="scaler">
+            <div class="scene scene3">
+              <div class="ground"></div>
+              <div class="rrow" style="top:46%" id="rrow">
+                <div class="rcard" data-i="0">
+                  <h6>🅿 Parking</h6>
+                  <div class="rs">6 of 6 skills confident</div>
+                  <div class="bar"><i data-bar data-target="100"></i></div>
+                  <div class="rv">Stage complete ✓</div>
+                </div>
+                <div class="rcard" data-i="1">
+                  <h6>🛣️ Highway</h6>
+                  <div class="rs">5 of 6 skills confident</div>
+                  <div class="bar"><i data-bar data-target="92"></i></div>
+                  <div class="rv">Almost there</div>
+                </div>
+                <div class="rcard" data-i="2">
+                  <h6>🏆 Test-ready</h6>
+                  <div class="rs">Badge unlocks at 100%</div>
+                  <div class="bar"><i data-bar data-target="0"></i></div>
+                  <div class="rv">Locked for now</div>
+                </div>
+              </div>
+              <div class="badge3" id="badge3" style="opacity:0">
+                <span class="bmark">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 10.5l3.4 3.2L15 6.6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                Test-ready!
+              </div>
+            </div>
+          </div>
+          <p class="cap"><b>“Am I ready for the test?” is now answered by the bars.</b> When Parking and Highway turn fully Confident, the badge appears — automatically.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= STAGES ================= -->
+<section id="stages">
+  <div class="container">
+    <div class="stages-head reveal">
+      <span class="eyebrow">Not just lessons</span>
+      <h2 class="section-title">Three stages. Zero guessing.</h2>
+      <p class="section-sub">
+        After every lesson, your instructor rates each skill. You see your progress bars move —
+        and a badge appears the day you're ready for the real test.
+      </p>
+    </div>
+
+    <div class="stage-grid">
+      <article class="stage-card reveal">
+        <div class="stage-icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+            <rect x="3" y="3" width="20" height="20" rx="4" stroke="#2F7D4F" stroke-width="2"/>
+            <text x="13" y="17.5" text-anchor="middle" font-size="11" font-weight="700" fill="#2F7D4F" font-family="Arial">P</text>
+          </svg>
+        </div>
+        <h3>1 · Parking stage</h3>
+        <p>Mirror discipline, clutch control, reversing, hill starts, bay and parallel parking.</p>
+        <div class="meter">
+          <div class="meter-top"><span>Stage progress</span><span>35%</span></div>
+          <div class="bar amber"><i style="width:35%"></i></div>
+        </div>
+        <div class="meter-note">Typically ~10 lessons</div>
+      </article>
+
+      <article class="stage-card reveal">
+        <div class="stage-icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+            <path d="M2 20h22M2 20V13M24 20v-7M6 16h4v-5M14 16v-8" stroke="#2F7D4F" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>2 · Highway stage</h3>
+        <p>Lane discipline, safe overtaking, roundabouts, night driving and long-distance control.</p>
+        <div class="meter">
+          <div class="meter-top"><span>Stage progress</span><span>60%</span></div>
+          <div class="bar"><i style="width:60%"></i></div>
+        </div>
+        <div class="meter-note">Unlocks when Parking is Confident</div>
+      </article>
+
+      <article class="stage-card reveal">
+        <div class="stage-icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+            <path d="M13 2l9 4v6c0 5.5-3.8 10-9 12-5.2-2-9-6.5-9-12V6l9-4z" fill="#2F7D4F"/>
+            <path d="M8.5 13l3 3 6-6.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>3 · Test-ready</h3>
+        <p>Mock tests, examiner-route practice, calm nerves. Earn the badge when everything is Confident.</p>
+        <div class="meter">
+          <div class="meter-top"><span>Status</span><span>Not there yet</span></div>
+          <div class="bar" style="opacity:.45"><i style="width:8%"></i></div>
+        </div>
+        <svg class="stage-flag" aria-label="Test-ready badge example" width="120" height="44" viewBox="0 0 120 44" fill="none">
+          <circle cx="22" cy="22" r="16" fill="#2F7D4F"/>
+          <path d="M15 22.5l4.5 4.5 9-10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="46" y="27" font-size="14" font-weight="700" fill="#2B2F33" font-family="Bricolage Grotesque, Arial">Test-ready</text>
+        </svg>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section id="how" class="how">
+  <div class="container">
+    <div class="reveal">
+      <span class="eyebrow">How it works</span>
+      <h2 class="section-title">From sign-up to test-day, in four steps</h2>
+      <p class="section-sub">Everything happens in your browser — on your phone, at your pace.</p>
+    </div>
+    <div class="steps steps-road">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <h4>Create your account</h4>
+        <p>Free sign-up in under a minute. No payment needed to look around.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <h4>Buy a package</h4>
+        <p>Pay online in naira. Your lesson credits appear instantly.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <h4>Book free slots</h4>
+        <p>You only ever book real, open slots — lesson clashes are impossible.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">4</div>
+        <h4>Get rated &amp; go</h4>
+        <p>Skills rated after every lesson until the Test-ready badge lands.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PACKAGES ================= -->
+<section id="packages">
+  <div class="container">
+    <div class="reveal">
+      <span class="eyebrow">Packages</span>
+      <h2 class="section-title">Pay once. Learn till you're ready.</h2>
+      <p class="section-sub">Every package runs on prepaid lesson credits. Cancel up to 24h before a lesson and the credit returns to you.</p>
+    </div>
+
+    <div class="pkg-grid">
+      <article class="pkg reveal">
+        <div class="pkg-partner">Starter</div>
+        <h3>Basics</h3>
+        <div class="price">₦80,000 <small>/ 6 lessons</small></div>
+        <ul>
+          <li>✓&nbsp; 60-minute lessons, one instructor</li>
+          <li>✓&nbsp; Parking stage checklist included</li>
+          <li>✓&nbsp; Progress tracking after every lesson</li>
+          <li>✓&nbsp; Booking reminders by email</li>
+        </ul>
+        <a class="btn btn-primary" href="#final">Choose Basics →</a>
+      </article>
+
+      <article class="pkg popular reveal">
+        <span class="ribbon">Most popular</span>
+        <div class="pkg-partner">Full course</div>
+        <h3>Standard</h3>
+        <div class="price">₦150,000 <small>/ 12 lessons</small></div>
+        <ul>
+          <li>✓&nbsp; Everything in Basics</li>
+          <li>✓&nbsp; Highway stage unlocking</li>
+          <li>✓&nbsp; Priority evening &amp; weekend slots</li>
+          <li>✓&nbsp; Balance instalments supported</li>
+        </ul>
+        <a class="btn btn-primary" href="#final">Choose Standard →</a>
+      </article>
+
+      <article class="pkg reveal">
+        <div class="pkg-partner">Finishing</div>
+        <h3>Test-prep</h3>
+        <div class="price">₦90,000 <small>/ 6 lessons</small></div>
+        <ul>
+          <li>✓&nbsp; Mock driving tests with scoring</li>
+          <li>✓&nbsp; Examiner-route practice</li>
+          <li>✓&nbsp; Test-day confidence coaching</li>
+          <li>✓&nbsp; Test-ready badge on completion</li>
+        </ul>
+        <a class="btn btn-primary" href="#final">Choose Test-prep →</a>
+      </article>
+    </div>
+
+    <div class="guarantees">
+      <div class="guarantee reveal">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="10" fill="#E8842C"/>
+          <path d="M11 6v6l4 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span><b>Never a wasted trip:</b> you can only book slots your instructor actually marked available — so the schedule never clashes.</span>
+      </div>
+      <div class="guarantee reveal">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="10" fill="#E8842C"/>
+          <path d="M7 11l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span><b>Balance, always in sight:</b> what you owe and what's left of your credits sits at the top of your dashboard — no surprise bills.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TESTIMONIALS ================= -->
+<section id="stories" class="how">
+  <div class="container">
+    <div class="reveal">
+      <span class="eyebrow">Learner stories</span>
+      <h2 class="section-title">They watched the bars move — then passed.</h2>
+    </div>
+    <div class="quotes" style="margin-top:36px">
+      <figure class="quote reveal">
+        <span class="stars" aria-label="5 stars">★★★★★</span>
+        <p>"I'm a person who panics, but watching the highway bar fill up every week made it feel like walking, not leaping. The badge arrived before the real test."</p>
+        <figcaption class="who">
+          <span class="avatar" aria-hidden="true">CO</span>
+          <span><b>Chioma O.</b><span>Passed June · Standard package</span></span>
+        </figcaption>
+      </figure>
+      <figure class="quote reveal">
+        <span class="stars" aria-label="5 stars">★★★★★</span>
+        <p>"No more WhatsApp argument about who booked 4pm. The app just showed free slots and I tapped one. My balance was right there too, so I never owed extra."</p>
+        <figcaption class="who">
+          <span class="avatar" aria-hidden="true">AT</span>
+          <span><b>Ade T.</b><span>Passed March · Basics package</span></span>
+        </figcaption>
+      </figure>
+      <figure class="quote reveal">
+        <span class="stars" aria-label="5 stars">★★★★★</span>
+        <p>"My instructor rated my parallel parking 'Improving' three times before 'Confident' — and the notes helped me practise the exact same thing at home."</p>
+        <figcaption class="who">
+          <span class="avatar" aria-hidden="true">NK</span>
+          <span><b>Ngozi K.</b><span>Passed August · Test-prep</span></span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section id="final" style="padding-bottom:0;background:transparent">
+  <div class="container">
+    <div class="final reveal">
+      <h2>Your first lesson is one click away.</h2>
+      <p>Create a free account, pick your package, and we'll set your wheels in motion.</p>
+      <a class="btn btn-light" href="#packages">Start driving →</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <span>© 2026 DriveRight Driving School · Lagos</span>
+    <nav aria-label="Footer">
+      <a href="#packages">Packages</a>
+      <a href="#how">How it works</a>
+      <a href="#">Contact</a>
+      <a href="#">WhatsApp</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- calm reveals ---------- */
+  var items = document.querySelectorAll(".reveal");
+  if (reduce) { items.forEach(function(el){ el.classList.add("in"); }); }
+  else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15, rootMargin: "0px 0px -40px 0px" });
+    items.forEach(function(el){ io.observe(el); });
+  }
+
+  /* ---------- 3D story ---------- */
+  if (reduce) return;  // static stacked version is already in the HTML
+
+  var wrap   = document.getElementById("storywrap");
+  var stage  = document.getElementById("stage");
+  var acts   = [
+    document.getElementById("act1"),
+    document.getElementById("act2"),
+    document.getElementById("act3")
+  ];
+  // windows of scroll progress [start, end] in wrapper fraction
+  var W = [[ -0.02, 0.40 ], [ 0.36, 0.72 ], [ 0.68, 1.06 ]];
+  var FADE = 0.07;
+
+  var cardA = document.getElementById("cardA"),
+      cardB = document.getElementById("cardB"),
+      chipClash = document.getElementById("chipClash"),
+      oshA = document.getElementById("oshA"),
+      oshB = document.getElementById("oshB"),
+      oshOK = document.getElementById("oshOK"),
+      overlabel = document.getElementById("overlabel");
+
+  var slip = document.getElementById("slip"),
+      phone = document.getElementById("phone"),
+      creditpct = document.getElementById("creditpct");
+
+  var bars = Array.prototype.slice.call(document.querySelectorAll("[data-bar]")),
+      badge3 = document.getElementById("badge3"),
+      rrow = document.getElementById("rrow");
+
+  function clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
+  function seg(p, a, b){ return clamp01((p - a) / (b - a)); }
+  function lerp(a, b, t){ return a + (b - a) * t; }
+
+  var frame = function(){
+    var vh = window.innerHeight;
+    var rect = wrap.getBoundingClientRect();
+    var total = wrap.offsetHeight - vh;
+    var p = total > 0 ? clamp01(-rect.top / total) : 0;
+
+    for (var i = 0; i < acts.length; i++){
+      var a = W[i][0], b = W[i][1];
+      var t = seg(p, a + FADE, b);
+      var o = seg(p, a, a + FADE) * (1 - seg(p, b - FADE, b));
+      var el = acts[i];
+      el.style.opacity = o.toFixed(3);
+      el.style.visibility = o <= 0 ? "hidden" : "visible";
+      if (o <= 0) continue;
+      if (i === 0) run1(t); else if (i === 1) run2(t); else run3(t);
+    }
+  }
+
+  /* ACT 1 — two bookings collide, then DriveRight separates them */
+  function run1(t){
+    var app = seg(t, 0, 0.35);        // slide-in
+    var res = seg(t, 0.55, 0.95);     // resolution
+    var ax = lerp(-190, -34, app) - res * 84;
+    var bx = lerp(190,  34, app) + res * 84;
+    var az = lerp(-80,  10, app);
+    var bz = lerp(-80,  10, app) + res * 40;
+    var ay = lerp(30, 0, app), by = lerp(60, 0, app);
+
+    cardA.style.transform =
+      "translate3d(" + ax.toFixed(1) + "px," + ay.toFixed(1) + "px," + az.toFixed(1) + "px) rotateY(" + lerp(-24, 5, app).toFixed(1) + "deg) rotateX(6deg)";
+    cardB.style.transform =
+      "translate3d(" + bx.toFixed(1) + "px," + by.toFixed(1) + "px," + bz.toFixed(1) + "px) rotateY(" + lerp(24, -5, app).toFixed(1) + "deg) rotateX(6deg)";
+
+    var clashO = 1 - res;
+    chipClash.style.opacity = clashO.toFixed(3);
+    chipClash.style.transform = "translateX(-50%) scale(" + (0.6 + 0.4 * clashO).toFixed(3) + ")";
+    oshA.style.opacity = (1 - res).toFixed(3);
+    oshB.style.opacity = (1 - res).toFixed(3);
+    oshOK.style.display = res > 0.02 ? "inline-block" : "none";
+    oshOK.style.opacity = res.toFixed(3);
+    overlabel.style.opacity = (1 - res).toFixed(3);
+    overlabel.textContent = res > 0.5 ? "Each learner, their own slot" : "Same Tuesday, 4:00 PM";
+    overlabel.classList.toggle("changed", res > 0.5);
+  }
+
+  /* ACT 2 — the lost balance slip vs the dashboard that remembers */
+  function run2(t){
+    var rise = seg(t, 0.05, 0.40);
+    var settle = seg(t, 0.45, 0.85);
+    var slipFall = seg(t, 0.15, 0.55);
+    var fill = seg(t, 0.50, 0.95);
+
+    phone.style.transform =
+      "translate3d(0," + lerp(50, 0, rise).toFixed(1) + "px," + lerp(-90, 0, rise).toFixed(1) + "px) rotateY(" + lerp(20, -4, rise).toFixed(1) + "deg) rotateX(2deg)";
+
+    slip.style.transform =
+      "translate3d(-46px," + lerp(0, 46, slipFall).toFixed(1) + "px," + lerp(20, -120, slipFall).toFixed(1) + "px) rotateX(" + lerp(0, -38, slipFall).toFixed(1) + "deg) rotateZ(" + lerp(0, -10, slipFall).toFixed(1) + "deg)";
+    slip.style.opacity = (1 - seg(t, 0.55, 0.95)).toFixed(3);
+
+    creditpct.textContent = Math.round(lerp(0, 67, fill));
+  }
+
+  /* ACT 3 — the three stage bars fill; the badge lands */
+  function run3(t){
+    bars.forEach(function(bar){
+      var i = parseInt(bar.closest(".rcard").getAttribute("data-i"), 10) || 0;
+      var delay = 0.10 + i * 0.10;
+      var q = seg(t, delay, delay + 0.35);
+      bar.style.width = (bar.getAttribute("data-target") * q).toFixed(1) + "%";
+      var card = bar.closest(".rcard");
+      card.style.transform =
+        "translate3d(0," + lerp(36, 0, q).toFixed(1) + "px," + lerp(-40 + i * -18, 0, q).toFixed(1) + "px)";
+      card.style.opacity = q.toFixed(3);
+    });
+
+    var bq = seg(t, 0.72, 0.98);
+    badge3.style.opacity = bq.toFixed(3);
+    badge3.style.transform =
+      "translateX(-50%) translate3d(0," + lerp(26, 0, bq).toFixed(1) + "px,0) scale(" + lerp(0.7, 1, bq).toFixed(3) + ")";
+  }
+
+  window.addEventListener("scroll", frame, { passive: true });
+  window.addEventListener("resize", frame);
+  frame();
+})();
+</script>
+</body>
+</html>

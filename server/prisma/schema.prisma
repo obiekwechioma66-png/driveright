@@ -1,0 +1,158 @@
+// DriveRight data model — agreed plan (see AGENTS.md).
+// Portable notes:
+// - SQLite locally for dev; switch "provider" to "postgresql" when deploying.
+// - No Prisma enums (not portable to every connector): role/stage/status/rating
+//   are String columns validated in the API against constant lists.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  phone        String?
+  address      String?
+  role         String // "learner" | "instructor" | "admin"
+  createdAt    DateTime @default(now())
+
+  learnerProfile   Learner?
+  instructorProfile Instructor?
+}
+
+model Learner {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id])
+  instructorId String?
+  instructor   Instructor? @relation("InstructorLearners", fields: [instructorId], references: [id])
+  dateOfBirth  DateTime?
+  address      String?
+  achievedTestReady Boolean @default(false) // set when system-verified
+
+  purchases     PackagePurchase[]
+  payments      Payment[]
+  bookings      Lesson[]
+}
+
+model Instructor {
+  id    String  @id @default(cuid())
+  phone String?
+  bio   String?
+  user  User    @relation(fields: [userId], references: [id])
+  userId String @unique
+
+  availability Availability[]
+  learners     Learner[]      @relation("InstructorLearners")
+  bookings     Lesson[]
+}
+
+model Availability {
+  id           String  @id @default(cuid())
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  weekday      Int     // 0=Sunday ... 6=Saturday
+  startTime    String  // "HH:MM" (Africa/Lagos local time)
+  endTime      String  // "HH:MM"
+}
+
+model Package {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  priceKobo   Int    // amounts in kobo (₦ x 100) to avoid floats
+  lessonCount Int
+  active      Boolean @default(true)
+
+  purchases PackagePurchase[]
+}
+
+model PackagePurchase {
+  id          String  @id @default(cuid())
+  learnerId   String
+  learner     Learner  @relation(fields: [learnerId], references: [id])
+  packageId   String
+  package     Package  @relation(fields: [packageId], references: [id])
+  lessonsTotal Int    // copy of lessonCount at purchase time
+  lessonsUsed  Int    @default(0)
+  paidAt      DateTime?
+  status      String  @default("pending") // pending | active | completed | cancelled
+
+  payments Payment[]
+  lessons  Lesson[]
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   PackagePurchase @relation(fields: [purchaseId], references: [id])
+  learnerId  String
+  learner    Learner  @relation(fields: [learnerId], references: [id])
+  amountKobo Int
+  method     String   // "card" | "cash" | "transfer"
+  reference  String   @unique
+  status     String   @default("pending") // pending | success | failed
+  createdAt  DateTime @default(now())
+}
+
+model Lesson {
+  id           String  @id @default(cuid())
+  learnerId    String
+  learner      Learner  @relation(fields: [learnerId], references: [id])
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  purchaseId   String?
+  purchase     PackagePurchase? @relation(fields: [purchaseId], references: [id])
+  startsAt     DateTime // lesson end = startsAt + 60 minutes (UTC in DB)
+  status       String   @default("booked") // booked | completed | cancelled
+  instructorNote String?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  reminderClaimedAt DateTime?
+  reminderSentAt DateTime?
+  reminderEmailId String?
+
+  ratings LessonRating[]
+}
+
+model LessonRating {
+  id       String @id @default(cuid())
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  skillId  String
+  skill    Skill  @relation(fields: [skillId], references: [id])
+  rating   String   // "not_yet" | "improving" | "confident"
+  note     String?
+
+  @@unique([lessonId, skillId])
+}
+
+model Skill {
+  id        String @id @default(cuid())
+  stage     String   // "parking" | "highway" | "test_ready"
+  name      String
+  displayOrder Int
+
+  ratings LessonRating[]
+}
+
+model SchoolSettings {
+  id             String   @id @default("school")
+  address        String   @default("")
+  phone          String   @default("")
+  whatsappNumber String   @default("")
+  email          String   @default("")
+  instagram      String?
+  facebook       String?
+  x              String?
+  tiktok         String?
+  youtube        String?
+  updatedAt      DateTime @updatedAt
+}
