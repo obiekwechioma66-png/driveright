@@ -1,7 +1,7 @@
 # AGENTS.md — DriveRight
 
 Driving school web app (single school). Roles: learner, instructor, admin.
-Status: steps 1–3 + 5 done (4 Paystack still pending). Working: SPA (landing, login, signup, 3 role dashboards, learner package picker /packages, booking page /book), Express API (auth, role dashboards, packages CRUD, POST /api/purchases, GET /api/instructors, GET /api/instructors/:id/availability?date=, POST /api/lessons with 4-check transaction per rule 1). Smoke tests: `server/scripts/smoke-auth.js`, `smoke-packages.js`, `smoke-booking.js` (run with tools\v24node). Sample logins (all `password123`): admin@driveright.ng, chike@driveright.ng, tunde@example.com. Next: step 4 Paystack payment flow (pending purchases can't book until active).
+Status: steps 1–5 verified; step 6 (lesson lifecycle: complete + skill ratings + test-ready gating) verified. Working: SPA (landing, login, signup, 3 role dashboards, package picker, booking /book, payment callback, profile/contact/admin settings pages), Express API (auth, role dashboards, packages CRUD, purchases, Paystack init/webhook/verify/simulate, instructors+availability+booking 4-check transaction, lessons complete/ratings). Smoke tests (all pass w/ tools\v24node): `smoke-auth.js`, `smoke-packages.js`, `smoke-booking.js`, `smoke-lessons.js`, `smoke-payments.js`. Sample logins (all `password123`): admin@driveright.ng, chike@driveright.ng, tunde@example.com. Remaining: step 9 reminder email (one email 24h before), step 10 landing 3D, admin polish, deploy.
 
 ## Agreed stack & plan
 - React (Vite) SPA + Node/Express API + PostgreSQL via Prisma; JWT auth (bcryptjs + jsonwebtoken).

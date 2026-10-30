@@ -108,7 +108,13 @@ router.get("/instructor/dashboard", requireAuth, requireRole("instructor"), asyn
       }),
       prisma.lesson.count({ where: { instructorId: profile.id, status: "completed" } }),
       prisma.lesson.findMany({ where: lessonWindow(todayRange), include: lessonInclude, orderBy: { startsAt: "asc" } }),
-      prisma.lesson.findMany({ where: lessonWindow(weekRange), include: lessonInclude, orderBy: { startsAt: "asc" } }),
+      // "This week" = the REST of the week (tomorrow onward) so today's rows
+      // don't appear in both tables.
+      prisma.lesson.findMany({
+        where: { ...lessonWindow(weekRange), startsAt: { gte: todayRange.end, lt: weekRange.end } },
+        include: lessonInclude,
+        orderBy: { startsAt: "asc" },
+      }),
     ]);
 
     const skillList = await prisma.skill.findMany({ orderBy: { displayOrder: "asc" } });
