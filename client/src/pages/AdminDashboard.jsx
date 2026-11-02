@@ -15,11 +15,26 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [assignmentBusy, setAssignmentBusy] = useState("");
+  const [assignmentError, setAssignmentError] = useState("");
 
   useEffect(() => { api("/admin/dashboard").then(setData).catch((e) => setError(e.message)); }, []);
 
   if (error) return <DashLayout user={user}><p className="form-error">{error}</p></DashLayout>;
   if (!data) return <DashLayout user={user}><p className="dim">Loading…</p></DashLayout>;
+
+  const assignLearner = async (learnerId, instructorId) => {
+    setAssignmentBusy(learnerId); setAssignmentError("");
+    try {
+      await api(`/admin/learners/${encodeURIComponent(learnerId)}/instructor`, { method: "PATCH", body: { instructorId: instructorId || null } });
+      const refreshed = await api("/admin/dashboard");
+      setData(refreshed);
+    } catch (err) { setAssignmentError(err.message); }
+    finally { setAssignmentBusy(""); }
+  };
+  const outstanding = data.learners.flatMap((learner) => learner.purchases
+    .filter((purchase) => purchase.balanceOwedKobo > 0)
+    .map((purchase) => ({ learner, purchase })));
 
   return (
     <DashLayout user={user}>
@@ -62,16 +77,32 @@ export default function AdminDashboard() {
       </section>
 
       <section className="dash-section">
+        <h2>Outstanding balances</h2>
+        <p className="dim">Amounts are calculated from each package price and successful payments recorded.</p>
+        {outstanding.length === 0 ? <p className="form-note ok">All recorded packages are fully paid.</p> : (
+          <div className="table-wrap"><table className="table admin-table">
+            <thead><tr><th>Learner</th><th>Instructor</th><th>Package</th><th>Paid</th><th>Package total</th><th>Balance owed</th></tr></thead>
+            <tbody>{outstanding.map(({ learner, purchase }) => <tr key={purchase.id}>
+              <td>{learner.name}<div className="dim small">{learner.email}</div></td><td>{learner.instructor || "Unassigned"}</td><td>{purchase.packageName}</td>
+              <td>{naira(purchase.paidKobo)}</td><td>{naira(purchase.priceKobo)}</td><td className="admin-owed">{naira(purchase.balanceOwedKobo)}</td>
+            </tr>)}</tbody>
+          </table></div>
+        )}
+      </section>
+
+      <section className="dash-section">
         <h2>Learners</h2>
+        <p className="dim">Assign or reassign each learner’s primary instructor here. Existing bookings keep the instructor they were booked with.</p>
+        {assignmentError && <p className="form-error" role="alert">{assignmentError}</p>}
         {data.learners.length === 0 ? <p className="dim">No learners yet.</p> : (
           <div className="table-wrap">
             <table className="table admin-table">
-              <thead><tr><th>Learner</th><th>Phone</th><th>Address</th><th>Instructor</th><th>Packages</th><th>Lessons remaining</th><th>Balance owed</th><th>Test-ready</th></tr></thead>
+              <thead><tr><th>Learner</th><th>Phone</th><th>Address</th><th>Primary instructor</th><th>Packages</th><th>Lessons remaining</th><th>Balance owed</th><th>Test-ready</th></tr></thead>
               <tbody>{data.learners.map((learner) => (
                 <tr key={learner.id}>
                   <td>{learner.name}<div className="dim small">{learner.email}</div></td>
                   <td>{learner.phone || "—"}</td><td>{learner.address || "—"}</td>
-                  <td>{learner.instructor || "—"}</td>
+                  <td><select className="assignment-select" aria-label={`Primary instructor for ${learner.name}`} value={learner.instructorId || ""} disabled={assignmentBusy === learner.id} onChange={(event) => assignLearner(learner.id, event.target.value)}><option value="">Unassigned</option>{data.instructors.map((instructor) => <option key={instructor.id} value={instructor.id}>{instructor.name}</option>)}</select>{assignmentBusy === learner.id && <small className="dim">Saving…</small>}</td>
                   <td>{learner.purchases.length ? learner.purchases.map((p) => `${p.packageName} (${p.status})`).join(", ") : "—"}</td>
                   <td>{learner.lessonsRemaining}</td>
                   <td className={learner.balanceOwedKobo > 0 ? "admin-owed" : ""}>{naira(learner.balanceOwedKobo)}</td>
@@ -121,7 +152,10 @@ export default function AdminDashboard() {
       </section>
 
       <PackagesManager />
+      <InstructorInvites />
+      <TestimonialsManager />
       <section className="dash-section"><h2>School contact details</h2><p className="dim">Edit the address, phone, WhatsApp, email, and public social links.</p><a className="btn btn-ghost" href="/admin/settings">Open School Settings</a></section>
+      <section className="dash-section"><h2>Owner introduction</h2><p className="dim">Add the owner’s name, short biography, and photo URL for the public landing page.</p><a className="btn btn-ghost" href="/admin/settings">Edit owner details</a></section>
     </DashLayout>
   );
 }
@@ -246,4 +280,87 @@ function PackagesManager() {
       )}
     </section>
   );
+}
+
+function InstructorInvites() {
+  const [invites, setInvites] = useState(null);
+  const [email, setEmail] = useState("");
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const load = () => api("/admin/instructor-invites").then((data) => setInvites(data.invites)).catch((err) => setError(err.message));
+  useEffect(() => { load(); }, []);
+  const sendInvite = async (event) => {
+    event.preventDefault(); setBusy(true); setError(""); setMessage(""); setInviteUrl("");
+    try {
+      const data = await api("/admin/instructor-invites", { method: "POST", body: { email } });
+      setEmail(""); setInviteUrl(data.inviteUrl || "");
+      setMessage(data.emailSent ? `Invitation sent to ${data.invite.email}.` : `Invitation created for ${data.invite.email}.`);
+      await load();
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  };
+  const revoke = async (id) => {
+    setError("");
+    try { await api(`/admin/instructor-invites/${encodeURIComponent(id)}`, { method: "DELETE" }); await load(); }
+    catch (err) { setError(err.message); }
+  };
+  const copyInvite = async () => {
+    try { await navigator.clipboard.writeText(inviteUrl); setMessage("Invitation link copied."); }
+    catch { setMessage("Copy the invitation link shown below and send it to the instructor."); }
+  };
+
+  return <section className="dash-section">
+    <h2>Invite instructors</h2>
+    <p className="dim">Invitations create instructor-only accounts and expire after 7 days. Configure Resend to email invites; otherwise copy the one-time link.</p>
+    <form className="admin-invite-form" onSubmit={sendInvite}>
+      <label>Instructor email<input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="instructor@example.com" /></label>
+      <button className="btn btn-primary" disabled={busy}>{busy ? "Creating invite…" : "Invite instructor"}</button>
+    </form>
+    {message && <p className="form-note ok" role="status">{message}</p>}
+    {inviteUrl && <div className="invite-link-box"><input aria-label="Instructor invitation link" readOnly value={inviteUrl} /><button type="button" className="btn btn-ghost" onClick={copyInvite}>Copy link</button></div>}
+    {error && <p className="form-error" role="alert">{error}</p>}
+    {invites === null ? <p className="loading-state" role="status">Loading invitations…</p> : invites.length === 0 ? <p className="dim">No instructor invitations yet.</p> : <div className="table-wrap"><table className="table admin-table"><thead><tr><th>Email</th><th>Created</th><th>Expires</th><th>Status</th><th>Action</th></tr></thead><tbody>{invites.map((invite) => <tr key={invite.id}><td>{invite.email}</td><td>{new Date(invite.createdAt).toLocaleDateString("en-NG")}</td><td>{new Date(invite.expiresAt).toLocaleDateString("en-NG")}</td><td><span className={`pill ${invite.status}`}>{invite.status}</span></td><td>{invite.status === "pending" && <button type="button" className="btn-mini danger" onClick={() => revoke(invite.id)}>Revoke</button>}</td></tr>)}</tbody></table></div>}
+  </section>;
+}
+
+function TestimonialsManager() {
+  const EMPTY = { learnerName: "", quote: "", rating: 5, active: false };
+  const [reviews, setReviews] = useState(null);
+  const [form, setForm] = useState(EMPTY);
+  const [editingId, setEditingId] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const load = () => api("/admin/testimonials").then((data) => setReviews(data.testimonials)).catch((err) => setError(err.message));
+  useEffect(() => { load(); }, []);
+  const set = (key) => (event) => setForm((current) => ({ ...current, [key]: key === "active" ? event.target.checked : event.target.value }));
+  const save = async (event) => {
+    event.preventDefault(); setBusy(true); setError(""); setMessage("");
+    try {
+      await api(editingId ? `/admin/testimonials/${encodeURIComponent(editingId)}` : "/admin/testimonials", { method: editingId ? "PATCH" : "POST", body: { ...form, rating: Number(form.rating) } });
+      setForm(EMPTY); setEditingId(null); setMessage("Review saved."); await load();
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  };
+  const remove = async (id) => {
+    try { await api(`/admin/testimonials/${encodeURIComponent(id)}`, { method: "DELETE" }); await load(); }
+    catch (err) { setError(err.message); }
+  };
+  const edit = (review) => { setEditingId(review.id); setForm({ learnerName: review.learnerName, quote: review.quote, rating: review.rating, active: review.active }); };
+  return <section className="dash-section">
+    <h2>Reviews on the public site</h2>
+    <p className="dim">Add genuine learner feedback. Only published reviews appear on the landing page.</p>
+    <form className="form admin-review-form" onSubmit={save}>
+      <label>Learner name<input required minLength={2} maxLength={120} value={form.learnerName} onChange={set("learnerName")} /></label>
+      <label>Review<textarea required minLength={12} maxLength={700} rows="3" value={form.quote} onChange={set("quote")} /></label>
+      <label>Rating<select value={form.rating} onChange={set("rating")}>{[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}</select></label>
+      <label className="check"><input type="checkbox" checked={form.active} onChange={set("active")} /> Published on public site</label>
+      <div className="form-actions"><button className="btn btn-primary" disabled={busy}>{busy ? "Saving…" : editingId ? "Save review" : "Add review"}</button>{editingId && <button className="btn btn-ghost" type="button" onClick={() => { setEditingId(null); setForm(EMPTY); }}>Cancel</button>}</div>
+    </form>
+    {message && <p className="form-note ok" role="status">{message}</p>}{error && <p className="form-error" role="alert">{error}</p>}
+    {reviews === null ? <p className="loading-state" role="status">Loading reviews…</p> : reviews.length === 0 ? <p className="dim">No learner reviews added yet.</p> : <div className="table-wrap"><table className="table admin-table"><thead><tr><th>Learner</th><th>Review</th><th>Rating</th><th>Visibility</th><th>Actions</th></tr></thead><tbody>{reviews.map((review) => <tr key={review.id}><td>{review.learnerName}</td><td>{review.quote}</td><td>{review.rating}/5</td><td>{review.active ? "Published" : "Hidden"}</td><td className="cell-actions"><button type="button" className="btn-mini" onClick={() => edit(review)}>Edit</button><button type="button" className="btn-mini danger" onClick={() => remove(review.id)}>Delete</button></td></tr>)}</tbody></table></div>}
+  </section>;
 }

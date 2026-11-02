@@ -77,6 +77,47 @@ function ApiStatus() {
 
 export default function Landing() {
   const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [packages, setPackages] = useState(null);
+  const [packageError, setPackageError] = useState("");
+  const [testimonials, setTestimonials] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [settings, setSettings] = useState(null);
+  const [budget, setBudget] = useState(150000);
+  const [lessonTarget, setLessonTarget] = useState("any");
+  const [recommendations, setRecommendations] = useState(null);
+
+  const loadPackages = () => {
+    setPackageError("");
+    api("/packages").then((data) => setPackages(data.packages || [])).catch((error) => setPackageError(error.message));
+  };
+  useEffect(() => {
+    loadPackages();
+    api("/testimonials").then((data) => setTestimonials(data.testimonials || [])).catch(() => setTestimonials([])).finally(() => setReviewsLoading(false));
+    api("/school-settings").then((data) => setSettings(data.settings || null)).catch(() => setSettings(null));
+  }, []);
+
+  const findPackages = (event) => {
+    event.preventDefault();
+    if (!packages?.length) return;
+    const maxBudget = Number(budget) * 100;
+    const minLessons = lessonTarget === "any" ? 0 : Number(lessonTarget);
+    const eligible = packages.filter((p) => p.priceKobo <= maxBudget && p.lessonCount >= minLessons);
+    const ranked = (eligible.length ? eligible : packages).slice().sort((a, b) => {
+      if (lessonTarget !== "any" && a.lessonCount !== b.lessonCount) {
+        const aGap = Math.abs(a.lessonCount - minLessons);
+        const bGap = Math.abs(b.lessonCount - minLessons);
+        if (aGap !== bGap) return aGap - bGap;
+      }
+      return a.priceKobo - b.priceKobo;
+    });
+    setRecommendations({ packages: ranked.slice(0, 2), exactFit: eligible.length > 0 });
+  };
+
+  const navItems = [
+    ["About DriveRight", "#about"], ["Our stages", "#stages"], ["Packages", "#packages"],
+    ["Find your package", "#finder"], ["Reviews", "#reviews"], ["Contact", "/contact"],
+  ];
 
   return (
     <>
@@ -90,14 +131,24 @@ export default function Landing() {
             </span>
             DriveRight
           </a>
-          <nav className="nav-desktop" aria-label="Main">
-            <a href="#stages">The 3 stages</a>
-            <a href="#packages">Packages</a>
-            <Link to="/contact">Contact</Link>
+          <nav id="public-navigation" className={`nav-desktop${menuOpen ? " mobile-open" : ""}`} aria-label="Main">
+            {navItems.map(([label, href]) => href.startsWith("/")
+              ? <Link key={href} to={href} onClick={() => setMenuOpen(false)}>{label}</Link>
+              : <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</a>)}
+            <Link to="/staff/login" onClick={() => setMenuOpen(false)}>Staff Portal</Link>
+            <Link to="/admin/login" onClick={() => setMenuOpen(false)}>Admin Portal</Link>
             {user
-              ? <Link to={homeForRole(user.role)}>My dashboard</Link>
-              : <Link to="/login">Log in</Link>}
+              ? <Link to={homeForRole(user.role)} onClick={() => setMenuOpen(false)}>My dashboard</Link>
+              : <Link to="/login" onClick={() => setMenuOpen(false)}>Learner sign in</Link>}
           </nav>
+          <button
+            className="menu-toggle"
+            type="button"
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={menuOpen}
+            aria-controls="public-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          ><span /><span /><span /></button>
           <div className="header-cta">
             {user ? (
               <Link className="btn btn-primary" to={homeForRole(user.role)}>My dashboard →</Link>
@@ -143,6 +194,22 @@ export default function Landing() {
           </div>
         </section>
 
+        <section id="about" className="about-section">
+          <div className="container">
+            <span className="eyebrow">A clearer way to learn</span>
+            <h2 className="section-title">Know where you are. Know what comes next.</h2>
+            <p className="section-sub">DriveRight helps instructors assess and monitor each learner’s development through Parking, Highway driving, and test preparation. Learners can see how far they’ve progressed and which skills still need practice.</p>
+            <div className="owner-card card">
+              {settings?.ownerPhotoUrl && <img className="owner-photo" src={settings.ownerPhotoUrl} alt={settings.ownerName ? `Portrait of ${settings.ownerName}` : "DriveRight owner"} loading="lazy" />}
+              <div>
+                <span className="eyebrow">Meet the owner</span>
+                <h3>{settings?.ownerName || "The person behind DriveRight"}</h3>
+                <p>{settings?.ownerBio || "The owner introduction can be added in Admin Portal → School Settings."}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="stages">
           <div className="container">
             <span className="eyebrow">Not just lessons</span>
@@ -174,20 +241,51 @@ export default function Landing() {
             <p className="section-sub">
               Prepaid lesson credits. Cancel more than 24h before a lesson and the credit returns to you.
             </p>
+            {packageError && <div className="inline-error" role="alert"><p>{packageError}</p><button type="button" className="btn btn-ghost" onClick={loadPackages}>Retry packages</button></div>}
+            {!packages && !packageError && <p className="loading-state" role="status">Loading lesson packages…</p>}
+            {packages?.length === 0 && <p className="dim">There are no active lesson packages right now. Please contact the school.</p>}
             <div className="grid3">
-              {packages.map((p) => (
-                <article className={`pkg${p.popular ? " popular" : ""}`} key={p.name}>
-                  {p.popular && <span className="ribbon">Most popular</span>}
-                  <span className="pkg-tag">{p.tag}</span>
+              {(packages || []).map((p) => (
+                <article className="pkg" key={p.id}>
+                  <span className="pkg-tag">{p.lessonCount} driving lessons</span>
                   <h3>{p.name}</h3>
-                  <div className="price">{p.price} <small>{p.lessons}</small></div>
-                  <ul>
-                    {p.items.map((i) => <li key={i}>✓&nbsp;{i}</li>)}
-                  </ul>
+                  <div className="price">{`₦${(p.priceKobo / 100).toLocaleString("en-NG")}`} <small>/ package</small></div>
+                  {p.description && <p>{p.description}</p>}
                   <Link className="btn btn-primary" to="/signup">Choose {p.name} →</Link>
                 </article>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section id="finder" className="finder-section">
+          <div className="container">
+            <span className="eyebrow">A good place to start</span>
+            <h2 className="section-title">Find your package</h2>
+            <p className="section-sub">Tell us your budget and how many lessons you have in mind. We’ll match you with active DriveRight packages.</p>
+            {!packages && !packageError && <p className="loading-state" role="status">Loading packages for your finder…</p>}
+            {packageError && <div className="inline-error" role="alert"><p>We couldn’t load the package options for the finder.</p><button type="button" className="btn btn-ghost" onClick={loadPackages}>Retry</button></div>}
+            {packages?.length === 0 && <p className="dim">No active packages are available to match right now. Please contact the school.</p>}
+            {packages?.length > 0 && <form className="finder-form card" onSubmit={findPackages}>
+              <label>Maximum budget (₦)<input type="number" min="100" step="5000" required value={budget} onChange={(event) => setBudget(event.target.value)} /></label>
+              <label>Lesson target<select value={lessonTarget} onChange={(event) => setLessonTarget(event.target.value)}><option value="any">I’m flexible</option><option value="6">At least 6 lessons</option><option value="10">At least 10 lessons</option><option value="12">At least 12 lessons</option></select></label>
+              <button className="btn btn-primary">Find matching packages</button>
+            </form>}
+            {recommendations && <div className="finder-results" aria-live="polite">
+              <h3>{recommendations.exactFit ? "These packages fit your choices" : "Here are the closest options"}</h3>
+              {!recommendations.exactFit && <p className="dim">No active package fits both preferences yet, so these are the nearest options to compare.</p>}
+              <div className="grid3">{recommendations.packages.map((p) => <article className="card finder-result" key={p.id}><h3>{p.name}</h3><p>{p.description || `${p.lessonCount} driving lessons`}</p><strong>₦{(p.priceKobo / 100).toLocaleString("en-NG")} · {p.lessonCount} lessons</strong><Link className="btn btn-primary" to="/signup">Choose this package →</Link></article>)}</div>
+            </div>}
+          </div>
+        </section>
+
+        <section id="reviews" className="reviews-section">
+          <div className="container">
+            <span className="eyebrow">Learner stories</span>
+            <h2 className="section-title">Reviews from our learners</h2>
+            {reviewsLoading ? <p className="loading-state" role="status">Loading reviews…</p>
+              : testimonials.length ? <div className="grid3">{testimonials.map((review) => <article className="card review-card" key={review.id}><p className="review-stars" aria-label={`${review.rating} out of 5 stars`}>{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</p><blockquote>“{review.quote}”</blockquote><strong>{review.learnerName}</strong></article>)}</div>
+                : <div className="card reviews-empty"><h3>Learner reviews coming soon</h3><p>DriveRight will share learner feedback here after it has been added by the school.</p></div>}
           </div>
         </section>
 
@@ -197,6 +295,7 @@ export default function Landing() {
               <h2>Your first lesson is one click away.</h2>
               <p>Create a free account, pick your package, and we'll get your wheels turning.</p>
               <Link className="btn btn-light" to="/signup">Start driving →</Link>
+              <Link className="instructor-portal-cta" to="/staff/login">Instructor Portal →</Link>
             </div>
           </div>
         </section>

@@ -48,13 +48,18 @@ async function call(path, { method = "GET", token, body } = {}) {
   check("garbage token -> 401", (await call("/learner/dashboard", { token: "junk" })).status === 401);
 
   // 6. registration works + duplicate rejected
-  const reg = await call("/auth/register", { method: "POST", body: { name: "Ada Test", email: `ada${Date.now()}@example.com`, password: "adapas123", role: "learner" } });
+  const stem = Date.now();
+  const reg = await call("/auth/register", { method: "POST", body: { name: "Ada Test", email: `ada${stem}@example.com`, password: "adapas123", role: "learner", phone: "08012345678" } });
   check("register learner", reg.status === 201 && reg.json?.user?.role === "learner");
   check("duplicate email -> 409", (await call("/auth/register", {
     method: "POST",
-    body: { name: "Ada Duplicate", email: reg.json?.user?.email, password: "adapas123", role: "learner" },
+    body: { name: "Ada Duplicate", email: reg.json?.user?.email, password: "adapas123", role: "learner", phone: "08012345678" },
   })).status === 409);
   check("invalid role rejected", (await call("/auth/register", { method: "POST", body: { name: "Evil", email: "evil@x.com", password: "12345678", role: "superadmin" } })).status === 400);
+  for (const role of ["instructor", "admin"]) {
+    const locked = await call("/auth/register", { method: "POST", body: { name: "Restricted Role", email: `role-${role}-${Date.now()}@example.com`, password: "password123", role, phone: "08012345678" } });
+    check(`public signup cannot create ${role}`, locked.status === 400);
+  }
   check("short password rejected", (await call("/auth/register", { method: "POST", body: { name: "S", email: "s@x.com", password: "123", role: "learner" } })).status === 400);
   const ada = await call("/learner/dashboard", { token: reg.json?.token });
   check("fresh learner dashboard loads (empty)", ada.status === 200 && ada.json?.purchases?.length === 0);

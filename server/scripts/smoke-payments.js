@@ -1,5 +1,6 @@
-// Local payment-flow smoke test. Requires the seeded users and
-// PAYSTACK_ALLOW_SIMULATE=1; it creates and removes its own package purchase.
+// Local payment-flow smoke test. Uses a configured Paystack test key when
+// supplied; otherwise PAYSTACK_ALLOW_SIMULATE=1 exercises the local fallback.
+// It creates and removes its own package purchase.
 const { PrismaClient } = require("@prisma/client");
 const crypto = require("crypto");
 const prisma = new PrismaClient();
@@ -20,6 +21,9 @@ async function call(path, { method = "GET", token, body } = {}) {
   let packageId;
   let purchaseId;
   try {
+    const paystackKey = process.env.PAYSTACK_SECRET_KEY || "";
+    const testKeyConfigured = paystackKey.startsWith("sk_test_");
+    if (paystackKey && !testKeyConfigured) throw new Error("Payment smoke test refuses non-test Paystack keys");
     const login = await call("/auth/login", {
       method: "POST", body: { email: "tunde@example.com", password: "password123" },
     });
@@ -41,17 +45,21 @@ async function call(path, { method = "GET", token, body } = {}) {
       method: "POST", token: login.json.token,
       body: { purchaseId, amountKobo: 10_000 },
     });
-    const reference = initialized.json?.devSimulate?.reference;
+    const reference = initialized.json?.devSimulate?.reference || initialized.json?.reference;
     const savedPayment = reference ? await prisma.payment.findUnique({ where: { reference } }) : null;
-    check("payment attempt is saved and local checkout fallback is offered",
-      [502, 503].includes(initialized.status) && !!reference && savedPayment?.purchaseId === purchaseId && savedPayment?.status === "pending");
-    if (!reference) throw new Error("Local simulation is unavailable; check PAYSTACK_ALLOW_SIMULATE=1 and that no Paystack secret is configured");
+    check(testKeyConfigured ? "Paystack test checkout initialized and payment attempt saved" : "local payment attempt is saved and simulation fallback is offered",
+      (testKeyConfigured ? initialized.status === 201 && !!initialized.json?.authorization_url : [502, 503].includes(initialized.status) && !!initialized.json?.devSimulate) &&
+      !!reference && savedPayment?.purchaseId === purchaseId && savedPayment?.status === "pending");
+    if (!reference) {
+      if (testKeyConfigured) console.error(`Paystack test initialization response: HTTP ${initialized.status}; ${initialized.json?.error || "no response error"}${initialized.json?.detail ? ` — ${initialized.json.detail}` : ""}`);
+      throw new Error(testKeyConfigured ? "Paystack test checkout did not return a transaction reference" : "Local simulation is unavailable; check PAYSTACK_ALLOW_SIMULATE=1 and that no Paystack secret is configured");
+    }
 
     check("bad webhook signature is rejected", (await call("/payments/webhook", {
       method: "POST", body: { event: "charge.success", data: { status: "success", reference, amount: 10_000 } },
     })).status === 401);
 
-    const webhookSecret = process.env.DRIVERIGHT_SMOKE_WEBHOOK_SECRET;
+    const webhookSecret = process.env.DRIVERIGHT_SMOKE_WEBHOOK_SECRET || (testKeyConfigured ? paystackKey : "");
     if (webhookSecret) {
       const event = { event: "charge.success", data: { status: "success", reference, amount: 10_000 } };
       const raw = JSON.stringify(event);

@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
-const ROLES = ["learner", "instructor", "admin"];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const cleanPhone = (value) => String(value || "").replace(/[\s()-]/g, "");
 const PHONE_RE = /^(?:0[789]\d{9}|\+234[789]\d{9})$/;
@@ -20,7 +19,8 @@ const signToken = (user) =>
 // ---- POST /api/auth/register --------------------------------------------
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body || {};
+    const { name, email, password } = req.body || {};
+    const requestedRole = req.body?.role;
     const phone = cleanPhone(req.body?.phone);
     const address = String(req.body?.address || "").trim();
 
@@ -30,9 +30,9 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Enter a valid email address" });
     if (!password || String(password).length < 8)
       return res.status(400).json({ error: "Password must be at least 8 characters" });
-    if (!ROLES.includes(role))
-      return res.status(400).json({ error: "Choose learner, instructor or admin" });
-    if (role === "learner" && !phone)
+    if (requestedRole && requestedRole !== "learner")
+      return res.status(400).json({ error: "Public sign-up is for learners. Instructor accounts require an invitation." });
+    if (!phone)
       return res.status(400).json({ error: "A phone number is required for lesson reminders" });
     if (phone && !PHONE_RE.test(phone))
       return res.status(400).json({ error: "Enter a valid Nigerian phone number, e.g. 08012345678" });
@@ -49,11 +49,10 @@ router.post("/register", async (req, res) => {
       data: {
         name: name.trim(),
         email: emailNorm,
-        role,
+        role: "learner",
         passwordHash,
         phone: phone || null,
-        ...(role === "learner" ? { learnerProfile: { create: { address: address || null } } } : {}),
-        ...(role === "instructor" ? { instructorProfile: { create: { phone: phone || null } } } : {}),
+        learnerProfile: { create: { address: address || null } },
       },
     });
 

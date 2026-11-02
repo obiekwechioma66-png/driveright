@@ -12,6 +12,8 @@
     "seed": "node prisma/seed.js",
     "seed:settings": "node prisma/seed-settings.js",
     "db:push": "prisma db push",
+    "prisma:generate:postgres": "prisma generate --schema=prisma/schema.postgresql.prisma",
+    "db:push:postgres": "prisma db push --schema=prisma/schema.postgresql.prisma",
     "db:studio": "prisma studio"
   },
   "dependencies": {

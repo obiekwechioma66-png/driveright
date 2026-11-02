@@ -21,13 +21,17 @@ const blankSettings = () => ({
   x: null,
   tiktok: null,
   youtube: null,
+  ownerName: "",
+  ownerBio: "",
+  ownerPhotoUrl: null,
   updatedAt: null,
 });
 
 async function readSettings() {
   const rows = await prisma.$queryRaw`
     SELECT "id", "address", "phone", "whatsappNumber", "email",
-      "instagram", "facebook", "x", "tiktok", "youtube", "updatedAt"
+      "instagram", "facebook", "x", "tiktok", "youtube",
+      "ownerName", "ownerBio", "ownerPhotoUrl", "updatedAt"
     FROM "SchoolSettings" WHERE "id" = ${SETTINGS_ID} LIMIT 1
   `;
   return rows[0] || null;
@@ -51,6 +55,16 @@ function validateSettings(body) {
       return { error: `${field} must be a handle or an http(s) profile URL.` };
     data[field] = value || null;
   }
+  const ownerName = String(body.ownerName || "").trim();
+  const ownerBio = String(body.ownerBio || "").trim();
+  const ownerPhotoUrl = String(body.ownerPhotoUrl || "").trim();
+  if (ownerName.length > 120) return { error: "Owner name must be 120 characters or fewer." };
+  if (ownerBio.length > 1200) return { error: "Owner bio must be 1,200 characters or fewer." };
+  if (ownerPhotoUrl && !/^https:\/\//i.test(ownerPhotoUrl))
+    return { error: "Owner photo must use a secure https URL." };
+  data.ownerName = ownerName;
+  data.ownerBio = ownerBio;
+  data.ownerPhotoUrl = ownerPhotoUrl || null;
   return { data };
 }
 
@@ -76,14 +90,14 @@ router.get("/admin/school-settings", requireAuth, requireRole("admin"), async (_
 router.patch("/admin/school-settings", requireAuth, requireRole("admin"), async (req, res) => {
   const validated = validateSettings(req.body || {});
   if (validated.error) return res.status(400).json({ error: validated.error });
-  const { address, phone, whatsappNumber, email, instagram, facebook, x, tiktok, youtube } = validated.data;
+  const { address, phone, whatsappNumber, email, instagram, facebook, x, tiktok, youtube, ownerName, ownerBio, ownerPhotoUrl } = validated.data;
   const updatedAt = new Date();
   try {
     await prisma.$executeRaw`
       INSERT INTO "SchoolSettings"
-        ("id", "address", "phone", "whatsappNumber", "email", "instagram", "facebook", "x", "tiktok", "youtube", "updatedAt")
+        ("id", "address", "phone", "whatsappNumber", "email", "instagram", "facebook", "x", "tiktok", "youtube", "ownerName", "ownerBio", "ownerPhotoUrl", "updatedAt")
       VALUES
-        (${SETTINGS_ID}, ${address}, ${phone}, ${whatsappNumber}, ${email}, ${instagram}, ${facebook}, ${x}, ${tiktok}, ${youtube}, ${updatedAt})
+        (${SETTINGS_ID}, ${address}, ${phone}, ${whatsappNumber}, ${email}, ${instagram}, ${facebook}, ${x}, ${tiktok}, ${youtube}, ${ownerName}, ${ownerBio}, ${ownerPhotoUrl}, ${updatedAt})
       ON CONFLICT ("id") DO UPDATE SET
         "address" = excluded."address",
         "phone" = excluded."phone",
@@ -94,6 +108,9 @@ router.patch("/admin/school-settings", requireAuth, requireRole("admin"), async 
         "x" = excluded."x",
         "tiktok" = excluded."tiktok",
         "youtube" = excluded."youtube",
+        "ownerName" = excluded."ownerName",
+        "ownerBio" = excluded."ownerBio",
+        "ownerPhotoUrl" = excluded."ownerPhotoUrl",
         "updatedAt" = excluded."updatedAt"
     `;
     res.json({ settings: await readSettings() });

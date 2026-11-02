@@ -30,6 +30,11 @@ export default function PublicFooter({ extra }) {
         {settings?.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
         <Link to="/contact">Contact & location</Link>
       </div>
+      <nav className="footer-portals" aria-label="Staff portals">
+        <Link to="/staff/login">Instructor Portal</Link>
+        <Link to="/admin/login">Admin Portal</Link>
+        <Link to="/login">Learner sign in</Link>
+      </nav>
       {socials.length > 0 && <div className="footer-socials" aria-label="Social media">
         {socials.map(([key, label, domain]) => <a key={key} href={socialUrl(settings[key], domain)} target="_blank" rel="noreferrer" aria-label={label} title={label}><span aria-hidden="true">{label === "Instagram" ? "◎" : label === "Facebook" ? "f" : label === "X" ? "𝕏" : label === "TikTok" ? "♪" : "▶"}</span></a>)}
       </div>}

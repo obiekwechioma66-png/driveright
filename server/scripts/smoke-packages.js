@@ -1,4 +1,6 @@
 // Packages CRUD + learner choose flow — API smoke test (idempotent via unique suffix).
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 const BASE = process.env.DRIVERIGHT_API_BASE || "http://localhost:4000/api";
 const results = [];
 const check = (name, ok, extra = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${name}${extra ? " — " + extra : ""}`);
@@ -13,6 +15,10 @@ async function call(path, { method = "GET", token, body } = {}) {
 }
 
 (async () => {
+  let packageId = null;
+  let purchaseId = null;
+  let tempPackageId = null;
+  try {
   // sign in
   const login = async (email) => (await call("/auth/login", { method: "POST", body: { email, password: "password123" } })).json;
   const admin = await login("admin@driveright.ng");
@@ -32,6 +38,7 @@ async function call(path, { method = "GET", token, body } = {}) {
   });
   check("admin creates package", created.status === 201 && created.json?.package?.active === true);
   const id = created.json?.package?.id;
+  packageId = id;
 
   // role guards
   check("learner cannot create", (await call("/packages", { method: "POST", token: learner.token, body: { name: "X", priceKobo: 100, lessonCount: 1 } })).status === 403);
@@ -51,6 +58,7 @@ async function call(path, { method = "GET", token, body } = {}) {
 
   // learner chooses it
   const buy = await call("/purchases", { method: "POST", token: learner.token, body: { packageId: id } });
+  purchaseId = buy.json?.purchase?.id || null;
   check("learner chooses package -> pending purchase", buy.status === 201 && buy.json?.purchase?.status === "pending" && buy.json?.purchase?.lessonsTotal === 9);
 
   // learner dashboard reflects the new purchase + balance
@@ -69,6 +77,7 @@ async function call(path, { method = "GET", token, body } = {}) {
 
   // delete a package with no sales -> hard delete
   const temp = await call("/packages", { method: "POST", token: admin.token, body: { name: "Temp " + suffix, priceKobo: 1_000_000, lessonCount: 2 } });
+  tempPackageId = temp.json?.package?.id || null;
   const del2 = await call(`/packages/${temp.json.package.id}`, { method: "DELETE", token: admin.token });
   check("unused package hard-deletes", del2.status === 200 && del2.json?.deleted === true);
 
@@ -78,4 +87,15 @@ async function call(path, { method = "GET", token, body } = {}) {
 
   console.log(results.join("\n"));
   console.log(results.some((r) => r.startsWith("FAIL")) ? "\n>>> SOME CHECKS FAILED" : "\n>>> ALL CHECKS PASSED");
-})().catch((e) => { console.error("CRASH", e); process.exit(1); });
+  if (results.some((r) => r.startsWith("FAIL"))) process.exitCode = 1;
+  } catch (e) {
+    console.error("CRASH", e);
+    process.exitCode = 1;
+  } finally {
+    if (purchaseId) await prisma.payment.deleteMany({ where: { purchaseId } });
+    if (purchaseId) await prisma.packagePurchase.deleteMany({ where: { id: purchaseId } });
+    if (packageId) await prisma.package.deleteMany({ where: { id: packageId } });
+    if (tempPackageId) await prisma.package.deleteMany({ where: { id: tempPackageId } });
+    await prisma.$disconnect();
+  }
+})();

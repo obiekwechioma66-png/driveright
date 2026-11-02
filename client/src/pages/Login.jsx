@@ -3,9 +3,9 @@ import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth, homeForRole } from "../auth";
 import PublicFooter from "../components/PublicFooter";
 
-export default function Login() {
+export default function Login({ portalRole = null }) {
   const nav = useNavigate();
-  const { login, user, checking } = useAuth();
+  const { login, logout, user, checking } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -17,6 +17,14 @@ export default function Login() {
     setBusy(true); setError("");
     try {
       const u = await login(form.email, form.password);
+      if (portalRole && u.role !== portalRole) {
+        logout();
+        setError(portalRole === "admin"
+          ? "This account is not authorized for the Admin Portal."
+          : "This account is not authorized for the Staff Portal. Use your learner sign-in instead.");
+        setBusy(false);
+        return;
+      }
       nav(homeForRole(u.role), { replace: true });
     } catch (err) {
       setError(err.message);
@@ -25,7 +33,10 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout title="Welcome back" sub="Sign in to your DriveRight dashboard.">
+    <AuthLayout
+      title={portalRole === "admin" ? "Admin Portal" : portalRole === "instructor" ? "Staff Portal" : "Learner sign in"}
+      sub={portalRole === "admin" ? "Sign in to manage DriveRight." : portalRole === "instructor" ? "Sign in to manage lessons and learner progress." : "Sign in to your learner dashboard."}
+    >
       <form className="form" onSubmit={submit}>
         <label>Email
           <input type="email" required autoComplete="email"
@@ -37,7 +48,9 @@ export default function Login() {
         </label>
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="btn btn-primary" disabled={busy}>{busy ? "Signing in…" : "Log in →"}</button>
-        <p className="form-note">New here? <Link to="/signup" className="link">Create an account</Link></p>
+        {portalRole === "admin" && <p className="form-note">Admin accounts are created by an existing administrator.</p>}
+        {portalRole === "instructor" && <p className="form-note">Instructor accounts are invitation-only. Ask an admin to invite you.</p>}
+        {!portalRole && <p className="form-note">New learner? <Link to="/signup" className="link">Create an account</Link></p>}
       </form>
     </AuthLayout>
   );

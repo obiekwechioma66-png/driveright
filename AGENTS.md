@@ -1,7 +1,7 @@
 # AGENTS.md — DriveRight
 
 Driving school web app (single school). Roles: learner, instructor, admin.
-Status: steps 1–5 verified; step 6 (lesson lifecycle: complete + skill ratings + test-ready gating) verified. Working: SPA (landing, login, signup, 3 role dashboards, package picker, booking /book, payment callback, profile/contact/admin settings pages), Express API (auth, role dashboards, packages CRUD, purchases, Paystack init/webhook/verify/simulate, instructors+availability+booking 4-check transaction, lessons complete/ratings). Smoke tests (all pass w/ tools\v24node): `smoke-auth.js`, `smoke-packages.js`, `smoke-booking.js`, `smoke-lessons.js`, `smoke-payments.js`. Sample logins (all `password123`): admin@driveright.ng, chike@driveright.ng, tunde@example.com. Remaining: step 9 reminder email (one email 24h before), step 10 landing 3D, admin polish, deploy.
+Status: steps 1–6 verified, step 9 reminder service wired (polls ~24h window, one email per lesson via Resend idempotency key; idle until RESEND_API_KEY + RESEND_FROM_EMAIL are set). Learner signup now requires a phone number (for reminders). Smoke tests (all pass w/ tools\v24node): `smoke-auth.js`, `smoke-packages.js`, `smoke-booking.js`, `smoke-lessons.js`, `smoke-payments.js`. Sample logins (all `password123`): admin@driveright.ng, chike@driveright.ng, tunde@example.com. Remaining: real Resend/Paystack keys from owner, step 10 landing 3D, extra admin polish, deploy.
 
 ## Agreed stack & plan
 - React (Vite) SPA + Node/Express API + PostgreSQL via Prisma; JWT auth (bcryptjs + jsonwebtoken).
@@ -12,14 +12,14 @@ Status: steps 1–5 verified; step 6 (lesson lifecycle: complete + skill ratings
 ## Standing project rules
 1. Double-booking is prevented in the BACKEND only, as one transaction with four checks: no instructor overlap, no learner overlap, slot inside instructor's weekly availability, learner has paid purchase with remaining credit. Admin overrides are allowed (warn, don't block).
 2. `balance owed = package price − Σ successful payments` — computed, never stored.
-3. Lesson reminder: exactly ONE email per lesson, 24h before (learner + instructor). No other automated emails.
+3. Lesson reminder: exactly ONE email per lesson, 24h before (learner + instructor). The only other transactional email is an instructor invitation sent by an admin.
 4. Test-ready badge is system-gated: enabled only when every Parking + Highway skill's latest rating = Confident. Ratings are stored per skill per lesson (history, not overwrite).
 5. Stages are strictly sequential: Parking → Highway → Test-ready.
 6. Lessons are 60 minutes. Store datetimes in UTC; display in Africa/Lagos.
 7. Cancellations: >24h before lesson returns the credit; ≤24h consumes it.
 
 ## Visual law (landing.html is the reference; tokens are CSS vars at its top)
-- Warm off-white `#FAF7F2`, road-grey `#2B2F33`, calm green `#2F7D4F` for CTAs ONLY, signal orange `#E8842C` ONLY for attention (balance owed, progress highlights).
+- Warm off-white `#FAF7F2`, road-grey `#2B2F33`, soft sky blue `#32718D` for CTAs and key actions, signal orange `#E8842C` ONLY for attention (balance owed, progress highlights).
 - Fonts: Bricolage Grotesque headings, Inter body. Flat colors + soft shadows. Mobile-first (360–430px), tap targets ≥44px.
 - Never: neon, gradients/sci-fi, cartoon, game-like motion. Learner dashboard must always show balance owed + next lesson on top.
 

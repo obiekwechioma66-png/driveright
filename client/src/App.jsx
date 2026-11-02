@@ -13,14 +13,15 @@ import { DashLayout } from "./pages/DashLayout";
 import Contact from "./pages/Contact";
 import Profile from "./pages/Profile";
 import AdminSchoolSettings from "./pages/AdminSchoolSettings";
+import StaffInvite from "./pages/StaffInvite";
 
 // Role gate. Signed-out users go to login; wrong roles are redirected to their
 // OWN dashboard — a learner can never open /instructor or /admin (the API
 // enforces it too with 401/403, see server/middleware/auth.js).
-function RequireRole({ role, children }) {
+function RequireRole({ role, loginPath, children }) {
   const { user, checking } = useAuth();
   if (checking) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={loginPath || "/login"} replace />;
   if (user.role !== role) return <Navigate to={homeForRole(user.role)} replace />;
   // Each dashboard page renders its own DashLayout chrome — no double wrapper here.
   return children;
@@ -41,15 +42,18 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/staff/login" element={<Login portalRole="instructor" />} />
+          <Route path="/admin/login" element={<Login portalRole="admin" />} />
+          <Route path="/staff/invite" element={<StaffInvite />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/learner" element={<RequireRole role="learner"><LearnerDashboard /></RequireRole>} />
+          <Route path="/learner" element={<RequireRole role="learner" loginPath="/login"><LearnerDashboard /></RequireRole>} />
           <Route path="/packages" element={<RequireRole role="learner"><LearnerPackages /></RequireRole>} />
           <Route path="/book" element={<RequireRole role="learner"><BookLesson /></RequireRole>} />
-          <Route path="/payment/callback" element={<RequireRole role="learner"><PaymentCallback /></RequireRole>} />
-          <Route path="/instructor" element={<RequireRole role="instructor"><InstructorDashboard /></RequireRole>} />
+          <Route path="/payment/callback" element={<RequireRole role="learner" loginPath="/login"><PaymentCallback /></RequireRole>} />
+          <Route path="/instructor" element={<RequireRole role="instructor" loginPath="/staff/login"><InstructorDashboard /></RequireRole>} />
           <Route path="/profile" element={<RequirePersonalRole><Profile /></RequirePersonalRole>} />
-          <Route path="/admin" element={<RequireRole role="admin"><AdminDashboard /></RequireRole>} />
-          <Route path="/admin/settings" element={<RequireRole role="admin"><AdminSchoolSettings /></RequireRole>} />
+          <Route path="/admin" element={<RequireRole role="admin" loginPath="/admin/login"><AdminDashboard /></RequireRole>} />
+          <Route path="/admin/settings" element={<RequireRole role="admin" loginPath="/admin/login"><AdminSchoolSettings /></RequireRole>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

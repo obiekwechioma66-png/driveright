@@ -32,6 +32,8 @@ app.use("/api/packages", require("./routes/packages"));
 app.use("/api/purchases", require("./routes/purchases"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api", require("./routes/schoolSettings"));
+app.use("/api", require("./routes/instructorInvites"));
+app.use("/api", require("./routes/testimonials"));
 app.use("/api", require("./routes/profile"));
 app.use("/api", require("./routes/booking"));
 

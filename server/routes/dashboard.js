@@ -237,6 +237,8 @@ router.get("/admin/dashboard", requireAuth, requireRole("admin"), async (req, re
         return {
           id: purchase.id,
           packageName: purchase.package.name,
+          priceKobo: purchase.package.priceKobo,
+          paidKobo,
           status: purchase.status,
           lessonsRemaining: Math.max(0, purchase.lessonsTotal - purchase.lessonsUsed),
           balanceOwedKobo: Math.max(0, purchase.package.priceKobo - paidKobo),
@@ -249,6 +251,7 @@ router.get("/admin/dashboard", requireAuth, requireRole("admin"), async (req, re
         email: learner.user.email,
         phone: learner.user.phone,
         address: addressByUserId.get(learner.userId) || learner.address || "",
+        instructorId: learner.instructorId,
         instructor: learner.instructor?.user.name || null,
         purchases,
         balanceOwedKobo: purchases.reduce((sum, purchase) => sum + purchase.balanceOwedKobo, 0),
